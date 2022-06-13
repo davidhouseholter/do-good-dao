@@ -1,0 +1,50 @@
+{
+  "canisters": {
+    "api": {
+      "main": "src_backend/Api.mo",
+      "type": "motoko"
+    },
+    
+    "app": {
+      "dependencies": [
+        "counter"
+      ],
+      "frontend": {
+        "entrypoint": "src/dist/index.html"
+      },
+      "source": [
+        "public/",
+        "dist/"
+      ],
+      "type": "assets"
+    },
+    "counter": {
+      "main": "src_backend/counter.mo",
+      "type": "motoko"
+    },
+    "internet_identity": {
+      "type": "custom",
+      "candid": "src_backend/ii/internet_identity.did",
+      "wasm": "src_backend/ii/internet_identity.wasm",
+  
+      "_build": "curl -sSL https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm -o internet_identity.wasm"
+    }
+  },
+  
+  "defaults": {
+    "build": {
+      "args": "",
+      "output": "build",
+      "packtool": "vessel sources"
+    }
+  },
+  "dfx": "0.10.0",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  
+  "version": 1
+}
