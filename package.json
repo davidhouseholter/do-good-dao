@@ -44,6 +44,7 @@
     "react-hook-form": "^7.31.3",
     "react-icons": "^4.4.0",
     "react-router-dom": "^6.3.0",
+    "react-tiny-fab": "^4.0.4",
     "react-use": "^17.4.0",
     "twin.macro": "^2.8.2",
     "yup": "^0.32.11"

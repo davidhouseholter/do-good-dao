@@ -10,14 +10,19 @@ module {
     public let pi : Float = 3.14;
     public let pow : Float = 2.718;
     /// View Models
-
     public type UserProfile = {
       userName: Text;
     };
 
+    public type ProfilePerson = {
+      personId : PersonId;
+    };
+
     public type UserProfileFull = {
-      userName: Text;
-      rewards: Nat;
+      userId : Text;
+      userName : Text;
+      rewards : Nat;
+      organizations : [OrganizationProfile];
     };
 
     /// End View Models
@@ -30,6 +35,8 @@ module {
       userName : Text ;
       createdAt : Timestamp;
       location : ?Location;
+      persons : [ProfilePerson];
+      organizations : [ProfileOrganization];
     };
 
     public type Helper = {
@@ -38,26 +45,72 @@ module {
       approved : Bool;
     };
 
-
     /// End User profile models
 
     /// Organization models
     
     public type OrganizationId = Nat; 
 
-
+    // data model -> OrganizationId maps to this object in 
+    // the stored state. 
     public type Organization = {
-      organziationId : OrganizationId;
+      userId : UserId;
+      userName : Text;
       createdAt : Timestamp;
       name : Text ;
       about : Text;
-      logoPic : LogoPic;
-      nonProfit: Bool;
-      approved : Bool;
+      logoPic : ?LogoPic;
+      tags : [Text];
+      location : ?Location;
     };
 
     public type LogoPic = [Nat8]; // encoded as a PNG file
+    
+    // used to map user to Organizations Map<Types.UserId, Types.ProfileOrganization>
+    public type ProfileOrganization = {
+        organizationId : OrganizationId;
+    };
 
+    public type OrganizationCreate = {
+      name : Text ;
+      about : Text;
+      userName : Text;
+    };
+
+    public type OrganizationProfile = {
+      organziationId : OrganizationId;
+      userName : Text; 
+      userId : UserId;
+      createdAt : Timestamp;
+      name : Text ;
+      about : Text;
+      logoPic : ?LogoPic;
+      tags : [Text];
+      location : ?Location;
+      persons : [Person];
+      requests : [HelpRequest];
+    };
+
+    public type OrganizationPublic = {
+      organziationId : OrganizationId;
+      userName : Text; 
+      createdAt : Timestamp;
+      name : Text ;
+      about : Text;
+      logoPic : ?LogoPic;
+      tags : [Text];
+      location : ?Location;
+    };
+
+    public type OrganizationEdit = {
+      organziationId : OrganizationId;
+      userName : Text; 
+      name : Text ;
+      about : Text;
+      logoPic : ?LogoPic;
+      tags : [Text];
+      location : ?Location;
+    };
 
     /// End Organization models
 
@@ -80,16 +133,14 @@ module {
 
     public type HelpRequestInit = {
       name: Text;
-      caption: Text;
+      description: Text;
       tags: [Text];
+      personId : ?PersonId;
+      person : ?PersonCreate;
+      location : ?Location;
     };
 
-    public type Location = {
-      lat: Float;
-      lng: Float
-    };
-    
-    public type Status = {
+    public type HelpRequestStatus = {
       #active ;
       #accepted: UserId;
       #confirmed;
@@ -97,19 +148,57 @@ module {
 
     public type HelpRequest = {
       requestId : HelpRequestId;
-      userId : UserId;
+      userId : UserId; // owner
+      personId : PersonId; // person to help
       name : Text;
-      caption : Text;
+      description : Text;
       createdAt : Timestamp;   
       tags : [Text];
       viewCount : Nat;
       location : ?Location;
-      status : Status;
+      status : HelpRequestStatus;
     };
     
-    /// HelpRequest
-   
-  
+    public type PersonId = Nat;
+
+    public type Person = {
+      personId : PersonId;
+      createdAt : Timestamp;   
+      organizationId : OrganizationId;
+      userId : ?UserId; // used to link a person to a user identity
+      location: ?Location;
+      address : Text ;
+      age : Nat ;
+      name : PersonName ;
+    } ;
+
+    public type PersonCreate = {
+      organizationId : OrganizationId;
+      // userId : ?UserId; only link person to user in a merge? // used to link a person to a user identity
+      location: ?Location;
+      address : Text ;
+      age : Nat ;
+      name : PersonName ;
+    } ;
+
+    public type PersonName = {
+      first : Text;
+      last : Text;
+      middle : Text;
+      full : Text;
+    };
+    /// End HelpRequest
+    public type Location = {
+      lat: Float;
+      lng: Float
+    };
+
+    public type PersonType = {
+      // caller is a user
+      #worker;
+      // person is used for requests
+      #request;
+    };
 
     /// Role for a caller into the service API.
     /// Common case is #user.
@@ -136,15 +225,16 @@ module {
 
     /// An ActionTarget identifies the target of a UserAction.
     public type ActionTarget = {
-      /// User's profile or videos are all potential targets of action.
       #user : UserId ;
-      /// Exactly one video is the target of the action.
+
+      #organization : OrganizationId; 
+
       #item : HelpRequestId ;
 
-      #allItems;
-      /// Everything is a potential target of the action.
+      #publicItems;
+
       #all;
-      /// Everything public is a potential target (of viewing only)
+
       #pubViewOnly
     };
 

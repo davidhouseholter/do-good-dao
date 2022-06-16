@@ -1,6 +1,0 @@
-service : {
-  callerPrincipal: () -> (principal);
-  getValue: () -> (nat) query;
-  increment: () -> ();
-  whoami: () -> (principal);
-}

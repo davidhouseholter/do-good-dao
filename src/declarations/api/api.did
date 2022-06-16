@@ -1,39 +1,115 @@
 type UserProfile__1 = record {userName: text;};
 type UserProfileFull = 
  record {
+   organizations: vec OrganizationProfile;
    rewards: nat;
+   userId: text;
    userName: text;
  };
 type UserProfile = record {userName: text;};
 type UserId__1 = text;
 type UserId = text;
 type Timestamp = int;
-type Status = 
- variant {
-   accepted: UserId__1;
-   active;
-   confirmed;
+type PersonName = 
+ record {
+   first: text;
+   full: text;
+   last: text;
+   middle: text;
  };
+type PersonId = nat;
+type PersonCreate = 
+ record {
+   address: text;
+   age: nat;
+   location: opt Location;
+   name: PersonName;
+   organizationId: OrganizationId;
+ };
+type Person = 
+ record {
+   address: text;
+   age: nat;
+   createdAt: Timestamp;
+   location: opt Location;
+   name: PersonName;
+   organizationId: OrganizationId;
+   personId: PersonId;
+   userId: opt UserId__1;
+ };
+type OrganizationPublic = 
+ record {
+   about: text;
+   createdAt: Timestamp;
+   location: opt Location;
+   logoPic: opt LogoPic;
+   name: text;
+   organziationId: OrganizationId;
+   tags: vec text;
+   userName: text;
+ };
+type OrganizationProfile = 
+ record {
+   about: text;
+   createdAt: Timestamp;
+   location: opt Location;
+   logoPic: opt LogoPic;
+   name: text;
+   organziationId: OrganizationId;
+   persons: vec Person;
+   requests: vec HelpRequest;
+   tags: vec text;
+   userId: UserId__1;
+   userName: text;
+ };
+type OrganizationId = nat;
+type OrganizationEdit = 
+ record {
+   about: text;
+   location: opt Location;
+   logoPic: opt LogoPic;
+   name: text;
+   organziationId: OrganizationId;
+   tags: vec text;
+   userName: text;
+ };
+type OrganizationCreate = 
+ record {
+   about: text;
+   name: text;
+   userName: text;
+ };
+type LogoPic = vec nat8;
 type Location = 
  record {
    lat: float64;
    lng: float64;
  };
+type HelpRequestStatus = 
+ variant {
+   accepted: UserId__1;
+   active;
+   confirmed;
+ };
 type HelpRequestInit = 
  record {
-   caption: text;
+   description: text;
+   location: opt Location;
    name: text;
+   person: opt PersonCreate;
+   personId: opt PersonId;
    tags: vec text;
  };
 type HelpRequestId = nat;
 type HelpRequest = 
  record {
-   caption: text;
    createdAt: Timestamp;
+   description: text;
    location: opt Location;
    name: text;
+   personId: PersonId;
    requestId: HelpRequestId;
-   status: Status;
+   status: HelpRequestStatus;
    tags: vec text;
    userId: UserId__1;
    viewCount: nat;
@@ -41,11 +117,16 @@ type HelpRequest =
 type API = 
  service {
    checkUsernameAvailable: (text) -> (bool) query;
-   createHelpRequest: (HelpRequestInit) -> (opt HelpRequestId);
-   createProfile: (text) -> (opt UserProfileFull);
+   createHelpRequest: (OrganizationId, HelpRequestInit) -> (opt HelpRequest);
+   createOrganization: (OrganizationCreate) -> (opt OrganizationProfile);
+   createProfile: (UserProfile__1) -> (opt UserProfileFull);
+   editOrganization: (OrganizationId, OrganizationEdit) -> (opt bool);
    getFeedItems: (opt nat) -> (opt vec HelpRequest) query;
-   getProfileFull: (principal, UserId) -> (opt UserProfileFull) query;
-   getUserNameByPrincipal: (principal) -> (opt vec text);
+   getOrganizationProfile: (OrganizationId) ->
+    (opt OrganizationProfile) query;
+   getOrganizationPublic: (OrganizationId) -> (opt OrganizationPublic) query;
+   getProfileFull: () -> (opt UserProfileFull) query;
+   getUserNameByPrincipal: (principal) -> (opt vec UserId);
    getUserProfile: (UserId) -> (opt UserProfile__1) query;
    getUsersPublic: (opt nat) -> (opt vec UserProfile) query;
    whoami: () -> (principal) query;

@@ -24,14 +24,24 @@ import Types "../Types";
       userName : Text;
     };
 
+    public type CreatePerson = {
+      info : Types.PersonCreate;
+    };
     public type CreateHelpRequest = {
       info : Types.HelpRequestInit;
+    };
+
+    public type CreateOrganization = {
+      info : Types.OrganizationCreate;
     };
 
     public type EventKind = {
       #reset : Types.TimeMode;
       #createProfile : CreateProfile;
       #createHelpRequest : CreateHelpRequest;
+      #createOrganization : CreateOrganization;
+      #createPerson : CreatePerson;
+      #eitOrganization : CreateOrganization;
     };
 
     public type Event = {

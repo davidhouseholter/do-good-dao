@@ -7,10 +7,9 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const Home = () => {
-  const {currentItems, setCurrentItems} = useAppState();
+  
   const {user, identity} = useAuth();
 
-const navigate = useNavigate();
   return (
     <Layout title="Home">
      <Map />
@@ -28,21 +27,7 @@ const navigate = useNavigate();
         Add Post
        </button>
     )} */}
-    {currentItems?.length > 0 && (
-      currentItems.map(item => (
-        <div key={item.itemId}>
-          <h3>{item.name}</h3>
-          <p>{item.caption}</p>
-          <p className='flex '>
-            <span className='mr-2'>Username: </span>
-            <a onClick={() => {
-              navigate(`/users/${item.userId}`)
-            }}
-            >{item.userId}</a>
-          </p>
-        </div>
-      ))
-    )}
+   
     </Layout>
   )
 }

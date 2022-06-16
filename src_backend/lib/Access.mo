@@ -148,9 +148,10 @@ module {
                  case (#update) {
                         switch actionTarget_ {
                           case (#pubViewOnly) { ?() };
+                          case (#organization i) { ?() };
                           case (#all) { null };
-                          case (#allItems) { null };
-                          case (#user i) {
+                          case (#publicItems) { null };
+                          case (#user i) {                                 
                                  if (userPrincipal.isMember(i, caller_)) {
                                    ?()
                                  } else { null }

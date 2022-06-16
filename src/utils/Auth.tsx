@@ -9,7 +9,19 @@ import { actorController } from "../services/ApiActor";
 import { Identity } from "@dfinity/agent";
 import { getProfileFull, getUserNameByPrincipal, logoutAPI } from "@/services/ApiService";
 import { Loading } from "notiflix";
+import { HelpRequest, OrganizationProfile, Person, UserProfile, UserProfileFull } from "@/declarations/api/api.did";
+export interface OrganizationProfile_ extends OrganizationProfile {
+  current: boolean;
+  requests: Array<HelpRequestApp>;
+}
 
+export interface UserProfileFull_ extends UserProfileFull {
+  organizations : Array<OrganizationProfile_>;
+  
+}
+export interface HelpRequestApp extends HelpRequest {
+  person: Person;
+}
 export interface AuthContext {
   isAuthenticated: boolean;
   isAuthReady: boolean;
@@ -18,10 +30,11 @@ export interface AuthContext {
   identity?: Identity;
   logIn: () => void;
   logOut: () => void;
-  user: any | undefined;
-  setUser: (p: any | undefined) => void;
+  user: UserProfileFull_ | undefined;
+  setUser: (p: UserProfileFull_ | undefined) => void;
   setHasCheckedICUser: (p: any | undefined) => void;
   setHasCheckedStarted: (p: any | undefined) => void;
+  addOrganization:(org: OrganizationProfile) => void;
 }
 
 // Provider hook that creates auth object and handles state
@@ -50,7 +63,7 @@ export function useProvideAuth(authClient): AuthContext {
       // Check to make sure your local storage user exists on the backend, and
       // log out if it doesn't (this is when you have your user stored in local
       // storage but the user was cleared from the backend)
-      getProfileFull(lsUser.userName).then((user_) => !user_ && logOut());
+      // getProfileFull(lsUser.userName).then((user_) => !user_ && logOut());
       return true;
     } 
     return false;
@@ -73,14 +86,18 @@ export function useProvideAuth(authClient): AuthContext {
           if(!result)
           {
             const id = identity!.getPrincipal()
-            getUserNameByPrincipal(id).then((username) => {
-              if (username) {
-                // User exists! Set user and redirect to /feed.
-                getProfileFull(username[0]).then((user) => {
-                  setUser(user!);
-                });
-              } 
+            getProfileFull().then((user) => {
+              setUser(user!);
             });
+            // getUserNameByPrincipal(id).then((username) => {
+              
+            //   if (username) {
+            //     // User exists! Set user and redirect to /feed.
+            //     getProfileFull(identity).then((user) => {
+            //       setUser(user!);
+            //     });
+            //   } 
+            // });
             
           }
         } else {
@@ -99,14 +116,14 @@ export function useProvideAuth(authClient): AuthContext {
     if (DFX_NETWORK === "local") {
       const testUserParam = new URLSearchParams(urlWithSearch).get("testUser");
       if (testUserParam) {
-        setIsAuthenticatedLocal(true);
-        setAuthClientReady(true);
-        setUserFromLocalStorage();
-        if (!user) {
-          getProfileFull(testUserParam).then(
-            (user_) => !user && user_ && setUser(user_)
-          );
-        }
+        // setIsAuthenticatedLocal(true);
+        // setAuthClientReady(true);
+        // setUserFromLocalStorage();
+        // if (!user) {
+        //   getProfileFull(testUserParam).then(
+        //     (user_) => !user && user_ && setUser(user_)
+        //   );
+        // }
       }
     }
   }, [urlWithSearch, user]);
@@ -180,29 +197,43 @@ export function useProvideAuth(authClient): AuthContext {
     const fetchData = async () => {
       if (isAuthenticated) {
         const id = identity!.getPrincipal()
+       
         if (!user && !id.isAnonymous()) {
-          getUserNameByPrincipal(id).then((username) => {
+          getProfileFull().then((user) => {
             
-            if (username != null && username.length > 0) {
-              // User exists! Set user and redirect to /feed.
-              getProfileFull(username[0]).then((user) => {
-                setUser(user!);
-                
-                setHasCheckedICUser(true);
-                // localStorage.setItem(
-                //   KEY_LOCALSTORAGE_USER,
-                //   JSON.stringify({ ...user, rewards: user!.rewards }, (key, value) =>
-                //     typeof value === "bigint" ? value.toString() : value
-                //   )
-                // );
-                Loading.remove();
-              });
-            } else {
+              setUser(user!);
               setHasCheckedICUser(true);
-              Loading.remove();
-            }
-            
+              // localStorage.setItem(
+              //   KEY_LOCALSTORAGE_USER,
+              //   JSON.stringify({ ...user, rewards: user!.rewards }, (key, value) =>
+              //     typeof value === "bigint" ? value.toString() : value
+              //   )
+              // );
+          
+            Loading.remove();
           });
+          // getUserNameByPrincipal(id).then((username) => {
+            
+          //   if (username != null && username.length > 0) {
+          //     // User exists! Set user and redirect to /feed.
+          //     getProfileFull(username[0]).then((user) => {
+          //       setUser(user!);
+                
+          //       setHasCheckedICUser(true);
+          //       // localStorage.setItem(
+          //       //   KEY_LOCALSTORAGE_USER,
+          //       //   JSON.stringify({ ...user, rewards: user!.rewards }, (key, value) =>
+          //       //     typeof value === "bigint" ? value.toString() : value
+          //       //   )
+          //       // );
+          //       Loading.remove();
+          //     });
+          //   } else {
+          //     setHasCheckedICUser(true);
+          //     Loading.remove();
+          //   }
+            
+          // });
         }
         else {
           Loading.remove();
@@ -214,7 +245,6 @@ export function useProvideAuth(authClient): AuthContext {
        
       }
     };
-    console.log(hasCheckedStarted)
     if (hasCheckedStarted || !isAuthenticated) {
 
     } else {
@@ -224,6 +254,10 @@ export function useProvideAuth(authClient): AuthContext {
     }
   }, [isAuthenticated]);
 
+  function addOrganization(org: OrganizationProfile) {
+    const userUpdate = {...user, organizations: [...user.organizations, org]}
+    setUser(userUpdate);
+  }
 
   return {
     isAuthenticated,
@@ -236,7 +270,8 @@ export function useProvideAuth(authClient): AuthContext {
     identity,
     setUser,
     setHasCheckedICUser,
-    setHasCheckedStarted
+    setHasCheckedStarted,
+    addOrganization
   };
 }
 

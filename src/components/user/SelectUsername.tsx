@@ -1,12 +1,6 @@
-import { checkUsername, createUser } from "@/services/ApiService";
-import { useAuth } from "@/utils";
-import { ExclamationIcon } from "@heroicons/react/outline";
-import { FormEvent, useRef, useState } from "react";
 
 export default function SelectUserName({error, username, setUsername}) {
    
-  
- 
     return (
         <>
           
@@ -23,9 +17,8 @@ export default function SelectUserName({error, username, setUsername}) {
                   </div>
                 </div>
               )}
-              <form className="mt-5 sm:flex sm:items-center">
+              <div className="mt-5 sm:flex sm:items-center">
                 <div className="w-full sm:max-w-xs">
-                
                   <input
                     onChange={(evt) => setUsername(evt.target.value)}
                     value={username}
@@ -35,9 +28,8 @@ export default function SelectUserName({error, username, setUsername}) {
                     id="username"
                     placeholder="username"
                   />
-
                 </div>
-              </form>
+              </div>
             </div>
           </div>
 

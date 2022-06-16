@@ -4,38 +4,20 @@ import { ExclamationIcon, XIcon } from '@heroicons/react/outline'
 import SelectUserName from '../user/SelectUsername'
 import { checkUsername, createUser } from '@/services/ApiService';
 import { useAuth } from '@/utils';
+import SelectAccountType from '../user/AccountSetup';
+import { useAppState } from '@/utils/AppState';
 
-export default function UserSetup({open, setOpen}){
+export default function UserSetupAccount({ open, setOpen }) {
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [username, setUsername] = useState("");
+  const { setHasCheckedAccountSetup } = useAppState();
+  const [editMode, setEditMode] = useState("");
+
   const auth = useAuth();
   const [error, setError] = useState("");
-  const onComplete = async () => {
-    if(isSigningIn) return;
-    setError("");
-    setIsSigningIn(true);
-    // Check to make sure this username has not been taken. If this user already
-    // has a username, it should have signed them in already.
-    const isAvailable = await checkUsername(username);
-    if (isAvailable) {
-      // Create a user on the backend and assign that user to frontend data.
-      const user = await createUser(username, auth.identity?.getPrincipal());
-      console.log(user);
-      auth.setUser(user);
-      setTimeout(() => {
-        setIsSigningIn(false);
-        setOpen(false, user);
-      }, 100);
-    } else {
-      setError(`Username '${username}' is taken`);
-      setIsSigningIn(false);
-    }
-  }
-
   return (
     <Transition.Root<ExoticComponent> show={open} as={Fragment}>
-      <Dialog<"div">  as="div" className="relative z-10" onClose={setOpen}>
-        <Transition.Child<ExoticComponent> 
+      <Dialog<"div"> as="div" className="relative z-10" onClose={setOpen}>
+        <Transition.Child<ExoticComponent>
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -63,7 +45,7 @@ export default function UserSetup({open, setOpen}){
                   <button
                     type="button"
                     className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    onClick={() => setOpen(false) }
+                    onClick={() => { setHasCheckedAccountSetup(true); setOpen(false); }}
                   >
                     <span className="sr-only">Close</span>
                     <XIcon className="h-6 w-6" aria-hidden="true" />
@@ -75,32 +57,42 @@ export default function UserSetup({open, setOpen}){
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <Dialog.Title as="h3" className="text-lg leading-6 font-medium text-gray-900">
-                      Choose Username
+                      Choose Account Type
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        You must first create a username.
+                        Do you want to view mo
                       </p>
                     </div>
-                    
+
                   </div>
                 </div>
-                <SelectUserName error={error} username={username} setUsername={setUsername}  />
+
+                <SelectAccountType setEditMode={setEditMode} setOpen={setOpen} />
+
+
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="button"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={onComplete}
-                  >
-                    Sign Up
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-                    onClick={() => setOpen(false)}
-                  >
-                    Cancel
-                  </button>
+
+                  {!editMode && (
+                    <>
+                      <button
+                        type="button"
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                        onClick={() => { setHasCheckedAccountSetup(true); setOpen(false) }}
+                      >
+                        Maybe Later
+                      </button>
+
+                      <div className="flex justify-center">
+                        <div className="form-check">
+                          <input className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="" />
+                          <label className="form-check-label inline-block text-gray-800" >
+                            Remember
+                          </label>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </Dialog.Panel>
             </Transition.Child>
