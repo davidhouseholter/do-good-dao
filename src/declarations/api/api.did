@@ -1,13 +1,22 @@
-type UserProfile__1 = record {userName: text;};
 type UserProfileFull = 
  record {
+   address: text;
+   helpRequests: vec HelpRequestViewPublic;
+   helpRequestsNotifications: vec HelperRequestNotifictions;
+   location: opt Location;
+   name: opt PersonName;
    organizations: vec OrganizationProfile;
    rewards: nat;
    userId: text;
    userName: text;
  };
-type UserProfile = record {userName: text;};
-type UserId__1 = text;
+type UserProfile = 
+ record {
+   address: text;
+   location: opt Location;
+   name: opt PersonName;
+   userName: text;
+ };
 type UserId = text;
 type Timestamp = int;
 type PersonName = 
@@ -35,7 +44,7 @@ type Person =
    name: PersonName;
    organizationId: OrganizationId;
    personId: PersonId;
-   userId: opt UserId__1;
+   userId: opt UserId;
  };
 type OrganizationPublic = 
  record {
@@ -59,7 +68,7 @@ type OrganizationProfile =
    persons: vec Person;
    requests: vec HelpRequest;
    tags: vec text;
-   userId: UserId__1;
+   userId: UserId;
    userName: text;
  };
 type OrganizationId = nat;
@@ -85,50 +94,107 @@ type Location =
    lat: float64;
    lng: float64;
  };
+type HelperRequestNotifictions = 
+ record {
+   createdAt: Timestamp;
+   message: text;
+   organizationId: OrganizationId;
+   read: bool;
+   requestId: HelpRequestId;
+   updatedAt: Timestamp;
+   userId: opt UserId;
+ };
+type Helper = 
+ record {
+   acceptComplete: bool;
+   approved: bool;
+   complete: bool;
+   createdAt: Timestamp;
+   updatedAt: Timestamp;
+   userId: UserId;
+ };
+type HelpRequestViewPublic = 
+ record {
+   approvedHelper: opt Helper;
+   createdAt: Timestamp;
+   description: text;
+   dueDate: Timestamp;
+   dueDateText: text;
+   location: opt Location;
+   name: text;
+   organization: OrganizationPublic;
+   organizationId: OrganizationId;
+   requestId: HelpRequestId;
+   rewardAmount: nat;
+   startDate: Timestamp;
+   startDateText: text;
+   status: HelpRequestStatus;
+   tags: vec text;
+   userId: UserId;
+ };
 type HelpRequestStatus = 
  variant {
-   accepted: UserId__1;
    active;
-   confirmed;
+   approved;
+   completed;
+   inProgress;
  };
 type HelpRequestInit = 
  record {
    description: text;
+   dueDate: Timestamp;
+   dueDateText: text;
    location: opt Location;
    name: text;
    person: opt PersonCreate;
    personId: opt PersonId;
+   rewardAmount: nat;
+   startDate: Timestamp;
+   startDateText: text;
    tags: vec text;
  };
 type HelpRequestId = nat;
 type HelpRequest = 
  record {
+   approvedHelper: opt Helper;
    createdAt: Timestamp;
    description: text;
+   dueDate: Timestamp;
+   dueDateText: text;
+   helpers: vec Helper;
    location: opt Location;
    name: text;
+   organizationId: OrganizationId;
    personId: PersonId;
    requestId: HelpRequestId;
+   rewardAmount: nat;
+   startDate: Timestamp;
+   startDateText: text;
    status: HelpRequestStatus;
    tags: vec text;
-   userId: UserId__1;
+   userId: UserId;
    viewCount: nat;
  };
 type API = 
  service {
+   acceptCompleteHelperRequest: (HelpRequestId, UserId) -> (opt bool);
+   acceptHelperRequest: (HelpRequestId, UserId) -> (opt bool);
+   applyForHelpRequest: (HelpRequestId) -> (opt bool);
    checkUsernameAvailable: (text) -> (bool) query;
+   completeHelperRequest: (HelpRequestId) -> (opt bool);
    createHelpRequest: (OrganizationId, HelpRequestInit) -> (opt HelpRequest);
    createOrganization: (OrganizationCreate) -> (opt OrganizationProfile);
-   createProfile: (UserProfile__1) -> (opt UserProfileFull);
+   createProfile: (UserProfile) -> (opt UserProfileFull);
    editOrganization: (OrganizationId, OrganizationEdit) -> (opt bool);
-   getFeedItems: (opt nat) -> (opt vec HelpRequest) query;
+   getFeedItems: (opt nat) -> (opt vec HelpRequestViewPublic) query;
    getOrganizationProfile: (OrganizationId) ->
     (opt OrganizationProfile) query;
    getOrganizationPublic: (OrganizationId) -> (opt OrganizationPublic) query;
    getProfileFull: () -> (opt UserProfileFull) query;
-   getUserNameByPrincipal: (principal) -> (opt vec UserId);
-   getUserProfile: (UserId) -> (opt UserProfile__1) query;
+   getUserNameByPrincipal: (principal) -> (opt vec UserId) query;
+   getUserProfile: (UserId) -> (opt UserProfile) query;
    getUsersPublic: (opt nat) -> (opt vec UserProfile) query;
+   updateUserProfile: (UserId, UserProfile) -> (opt bool);
    whoami: () -> (principal) query;
  };
 service : () -> API

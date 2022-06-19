@@ -1,10 +1,11 @@
 import { Fragment, useState, ExoticComponent } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { ExclamationIcon, HandIcon, KeyIcon, XIcon } from '@heroicons/react/outline'
-import SelectUserName from '../user/SelectUsername'
+import { KeyIcon, MapIcon, PhoneIcon, PlusCircleIcon, TagIcon, XIcon } from '@heroicons/react/outline'
 import { checkUsername, createHelpRequest, createUser } from '@/services/ApiService';
 import { useAuth } from '@/utils';
 import { HelpRequestInit, OrganizationProfile, PersonCreate } from '@/declarations/api/api.did';
+import { Loading, Notify } from 'notiflix';
+import { number } from 'yup';
 interface Props {
   open: boolean;
   setOpen: any;
@@ -13,38 +14,59 @@ interface Props {
 export default function AddHelpRequstModal({ open, setOpen, organization }: Props) {
   const [currentHelpRequest, currentHelpRequestSet] = useState<HelpRequestInit>(
     {
-      description: "The description of the request",
-      name: "The First Request",
+      description: "",
+      name: "",
       person: [],
       personId: [],
       tags: [],
-      location: []
+      location: [],
+      rewardAmount: BigInt(10),
+      startDate: BigInt(10),
+      startDateText: "",
+      dueDate: BigInt(10),
+      dueDateText: ""
     });
+  const [loading, loadingSet] = useState(false);
   const [addPerson, addPersonSet] = useState(false);
+
   const [activePerson, activePersonSet] = useState<BigInt | null>(null);
   const [personNew, personNewSet] = useState<PersonCreate>({
     organizationId: organization.organziationId,
-    address: "The address",
+    address: "",
     age: BigInt(0),
     name: {
-      first: "Scout",
-      last: "Dog",
-      middle: "House",
+      first: "",
+      last: "",
+      middle: "",
       full: "",
     },
     location: [],
   });
 
   const onComplete = async () => {
-    if(addPerson) {
+    if (loading) {
+      return;
+    }
+    loadingSet(true);
+    Loading.standard("Saving Help Request...");
+
+    if (addPerson) {
       currentHelpRequest.person = [personNew];
       currentHelpRequest.personId = []
     } else {
       currentHelpRequest.person = [];
       currentHelpRequest.personId[0] = activePerson! as bigint;
     }
-    const res = await  createHelpRequest(organization.organziationId, currentHelpRequest);
-    setOpen(false, res);
+    const res = await createHelpRequest(organization.organziationId, currentHelpRequest);
+    if (res) {
+      loadingSet(false);
+      Loading.remove();
+      setOpen(false, res);
+    } else {
+      Notify.failure('Could not save the help request.');
+      Loading.remove();
+    }
+
 
   }
 
@@ -98,17 +120,12 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                         Enter the information below.
                       </p>
                     </div>
-
                   </div>
                 </div>
                 <div className=' '>
                   <div className="border-t border-gray-200  bg-gray-100 pt-5 px-5">
-                    <h2 className="text-lg font-medium text-gray-900">New Request</h2>
-
-
-
-                    <div className="mt-6 grid grid-cols-6 gap-y-6 gap-x-4">
-                      <div className="col-span-6">
+                    <div className=" grid grid-cols-6 gap-y-6 gap-x-4">
+                      <div className="col-span-4">
                         <label htmlFor="request-name" className="block text-sm font-medium text-gray-700">
                           Request Name
                         </label>
@@ -124,7 +141,22 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                           />
                         </div>
                       </div>
-
+                      <div className="col-span-2">
+                        <label htmlFor="request-name" className="block text-sm font-medium text-gray-700">
+                          Reward
+                        </label>
+                        <div className="mt-1">
+                          <input
+                            type="number"
+                            id="reward-amount"
+                            onChange={(evt) => currentHelpRequestSet({ ...currentHelpRequest, rewardAmount: BigInt(evt.target.value) })}
+                            value={Number(currentHelpRequest.rewardAmount)}
+                            name="request-name"
+                            autoComplete="request-name"
+                            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          />
+                        </div>
+                      </div>
                       <div className="col-span-6">
                         <label htmlFor="request-description" className="block text-sm font-medium text-gray-700">
                           Description
@@ -140,7 +172,6 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                           ></textarea>
                         </div>
                       </div>
-
                       {!addPerson && (
                         <>
                           <div className="col-span-4">
@@ -152,15 +183,15 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                                 id="personId"
                                 name="personId"
                                 value={activePerson?.toString()}
-                                onChange={(evt) => {activePersonSet(BigInt(evt.target.value))}}
-                                
+                                onChange={(evt) => { activePersonSet(BigInt(evt.target.value)) }}
+
                                 autoComplete="person-name"
                                 className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                               >
-                                  <option value="null">Choose person ...</option>
-                                  {organization.persons.map(person => (
-                                    <option key={person.personId.toString()} value={person.personId.toString()}>{person.name.first} {person.name.last }</option>
-                                  ))}
+                                <option value="null">Choose person ...</option>
+                                {organization.persons.map(person => (
+                                  <option key={person.personId.toString()} value={person.personId.toString()}>{person.name.first} {person.name.last}</option>
+                                ))}
                               </select>
                             </div>
                           </div>
@@ -243,7 +274,7 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                                   <div className="mt-1">
                                     <input
                                       type="text"
-                                      onChange={(evt) => personNewSet({ ...personNew, address:  evt.target.value  })}
+                                      onChange={(evt) => personNewSet({ ...personNew, address: evt.target.value })}
                                       value={personNew.address}
                                       id="address name"
                                       name="address-name"
@@ -257,39 +288,57 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                           </div>
                         </>
                       )}
-
-
-                      <div className="col-span-6">
-                        <label htmlFor="request-location" className="block text-sm font-medium text-gray-700">
-                          Location
+                      <div className="col-span-3">
+                        <label htmlFor="start-date" className="block text-sm font-medium text-gray-700">
+                         Start Date
                         </label>
                         <div className="mt-1">
-                          <p>Search For Location...</p>
-                        {/* <input
+                          <input
                             type="text"
-                            id="request-location"
-                            name="request-location"
-                            onChange={(evt) => currentHelpRequestSet({ ...currentHelpRequest, location:[{ evt.target.value}] })}
-                            value={currentHelpRequest.location}
-                            autoComplete="cc-number"
+                            id="start-date"
+                            onChange={(evt) => currentHelpRequestSet({ ...currentHelpRequest, startDateText: evt.target.value })}
+                            value={currentHelpRequest.startDateText}
+                            name="start-date"
+                            autoComplete="start-date"
                             className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                          /> */}
+                          />
                         </div>
                       </div>
-
-                      <div className="col-span-6">
-                        <label htmlFor="request-location" className="block text-sm font-medium text-gray-700">
-                          Tags
+                      <div className="col-span-3">
+                        <label htmlFor="due-date" className="block text-sm font-medium text-gray-700">
+                         Due Date
                         </label>
                         <div className="mt-1">
-                          <p>Add Categories...</p>
-                        
+                          <input
+                            type="text"
+                            id="due-date"
+                            onChange={(evt) => currentHelpRequestSet({ ...currentHelpRequest, dueDateText: evt.target.value})}
+                            value={currentHelpRequest.dueDateText}
+                            name="due-date"
+                            autoComplete="due-date"
+                            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="col-span-6 mb-10 mt-5">
+
+                        <div className="mt-1 flex gap-6 mx-6">
+                          <button className="hover:bg-blue-200 p-5  bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <PhoneIcon className='h-10 w-10' />  <PlusCircleIcon className='h-5 w-5' />
+                          </button>
+                          <button className="hover:bg-blue-200 p-5  bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <MapIcon className='h-10 w-10' />  <PlusCircleIcon className='h-5 w-5' />
+                          </button>
+                          <button className="hover:bg-blue-200 p-5  bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <TagIcon className='h-10 w-10' />  <PlusCircleIcon className='h-5 w-5' />
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse relative">
+                  
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
@@ -304,6 +353,7 @@ export default function AddHelpRequstModal({ open, setOpen, organization }: Prop
                   >
                     Cancel
                   </button>
+                  <p className='absolute left-0 top-1'>Rewards: {currentHelpRequest.rewardAmount.toString()} Tokens</p>
                 </div>
               </Dialog.Panel>
             </Transition.Child>

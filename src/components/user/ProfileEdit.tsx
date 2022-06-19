@@ -165,7 +165,7 @@ export default function ProfileEdit({user}) {
                                 </div>
 
                                 {/* Privacy section */}
-                                <div className="pt-6 divide-y divide-gray-200">
+                                {/* <div className="pt-6 divide-y divide-gray-200">
                                     <div className="px-4 sm:px-6">
                                         <div>
                                             <h2 className="text-lg leading-6 font-medium text-gray-900">Privacy</h2>
@@ -184,7 +184,7 @@ export default function ProfileEdit({user}) {
                                                         Nulla amet tempus sit accumsan. Aliquet turpis sed sit lacinia.
                                                     </Switch.Description>
                                                 </div>
-                                                {/* <Switch<any>
+                                                <Switch<any>
                                                     checked={availableToHire}
                                                     onChange={setAvailableToHire}
                                                     className={classNames(
@@ -199,7 +199,7 @@ export default function ProfileEdit({user}) {
                                                             'inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200'
                                                         )}
                                                     />
-                                                </Switch> */}
+                                                </Switch>
                                             </Switch.Group>
                                             <Switch.Group as="li" className="py-4 flex items-center justify-between">
                                                 <div className="flex flex-col">
@@ -210,7 +210,7 @@ export default function ProfileEdit({user}) {
                                                         Pharetra morbi dui mi mattis tellus sollicitudin cursus pharetra.
                                                     </Switch.Description>
                                                 </div>
-                                                {/* <Switch
+                                                <Switch
                                                     checked={privateAccount}
                                                     onChange={setPrivateAccount}
                                                     className={classNames(
@@ -225,7 +225,7 @@ export default function ProfileEdit({user}) {
                                                             'inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200'
                                                         )}
                                                     />
-                                                </Switch> */}
+                                                </Switch>
                                             </Switch.Group>
                                             <Switch.Group as="li" className="py-4 flex items-center justify-between">
                                                 <div className="flex flex-col">
@@ -236,7 +236,7 @@ export default function ProfileEdit({user}) {
                                                         Integer amet, nunc hendrerit adipiscing nam. Elementum ame
                                                     </Switch.Description>
                                                 </div>
-                                                {/* <Switch
+                                                <Switch
                                                     checked={allowCommenting}
                                                     onChange={setAllowCommenting}
                                                     className={classNames(
@@ -251,7 +251,7 @@ export default function ProfileEdit({user}) {
                                                             'inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200'
                                                         )}
                                                     />
-                                                </Switch> */}
+                                                </Switch>
                                             </Switch.Group>
                                             <Switch.Group as="li" className="py-4 flex items-center justify-between">
                                                 <div className="flex flex-col">
@@ -262,7 +262,7 @@ export default function ProfileEdit({user}) {
                                                         Adipiscing est venenatis enim molestie commodo eu gravid
                                                     </Switch.Description>
                                                 </div>
-                                                {/* <Switch
+                                                <Switch
                                                     checked={allowMentions}
                                                     onChange={setAllowMentions}
                                                     className={classNames(
@@ -277,7 +277,7 @@ export default function ProfileEdit({user}) {
                                                             'inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200'
                                                         )}
                                                     />
-                                                </Switch> */}
+                                                </Switch>
                                             </Switch.Group>
                                         </ul>
                                     </div>
@@ -295,7 +295,7 @@ export default function ProfileEdit({user}) {
                                             Save
                                         </button>
                                     </div>
-                                </div>
+                                </div> */}
         </>
     )
 }

@@ -1,6 +1,6 @@
 import { Fragment, useState, ExoticComponent } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { ExclamationIcon, XIcon } from '@heroicons/react/outline'
+import { ExclamationIcon, UserIcon, XIcon } from '@heroicons/react/outline'
 import SelectUserName from '../user/SelectUsername'
 import { checkUsername, createUser } from '@/services/ApiService';
 import { useAuth } from '@/utils';
@@ -52,17 +52,26 @@ export default function UserSetupAccount({ open, setOpen }) {
                   </button>
                 </div>
                 <div className="sm:flex sm:items-start">
-                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <ExclamationIcon className="h-6 w-6 text-yellow-600" aria-hidden="true" />
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <UserIcon className="h-6 w-6 text-yellow-600" aria-hidden="true" />
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <Dialog.Title as="h3" className="text-lg leading-6 font-medium text-gray-900">
-                      Choose Account Type
+                     
+                      {!editMode && (<>
+                        Setup Account
+                      </>) }
+                      {editMode && (<>
+                        Finish Setup
+                      </>) }
                     </Dialog.Title>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Do you want to view mo
+                      {!editMode && (<>
+                        <p className="text-sm text-gray-500">
+                        Before you can use the application you must finish the account setup. You are
+                        free to browse the site by skipping this step.
                       </p>
+                      </>) }
                     </div>
 
                   </div>
@@ -70,27 +79,25 @@ export default function UserSetupAccount({ open, setOpen }) {
 
                 <SelectAccountType setEditMode={setEditMode} setOpen={setOpen} />
 
-
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-
                   {!editMode && (
                     <>
                       <button
                         type="button"
-                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                        className="mt-3 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
                         onClick={() => { setHasCheckedAccountSetup(true); setOpen(false) }}
                       >
                         Maybe Later
                       </button>
 
-                      <div className="flex justify-center">
-                        <div className="form-check">
+                      {/* <div className="flex justify-center">
+                        <div className="form-check mt-2 mr-10">
                           <input className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="" />
                           <label className="form-check-label inline-block text-gray-800" >
                             Remember
                           </label>
                         </div>
-                      </div>
+                      </div> */}
                     </>
                   )}
                 </div>

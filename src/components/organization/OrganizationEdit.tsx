@@ -1,4 +1,6 @@
 import { OrganizationProfile, UserProfile } from "@/declarations/api/api.did";
+import { editOrganization } from "@/services/ApiService";
+import { HelpRequestViewPublic_ } from "@/utils/AppState";
 import { Switch } from "@headlessui/react";
 import { useState } from "react";
 interface Props {
@@ -23,13 +25,16 @@ export default function OrganizationEdit({ user, org } : Props) {
     }
     const onSave = () => {
         console.log(orgDataStatic)
+        editOrganization(org.organziationId, orgDataStatic)
         
     }
+   
     return orgDataStatic && (
         <>
+
             <div className="py-6 px-4 sm:p-6 lg:pb-8">
                 <div>
-                    <h2 className="text-lg leading-6 font-s text-gray-900">{orgDataStatic.name}</h2>
+                    <h2 className="text-lg leading-6 font-s text-gray-900">{org.name}</h2>
                     <p className="mt-1 text-sm text-gray-500">
                         This information will be displayed publicly so be careful what you share.
                     </p>

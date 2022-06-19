@@ -10,17 +10,19 @@ import { Identity } from "@dfinity/agent";
 import { getProfileFull, getUserNameByPrincipal, logoutAPI } from "@/services/ApiService";
 import { Loading } from "notiflix";
 import { HelpRequest, OrganizationProfile, Person, UserProfile, UserProfileFull } from "@/declarations/api/api.did";
+import { HelpRequestViewPublic_ } from "./AppState";
 export interface OrganizationProfile_ extends OrganizationProfile {
   current: boolean;
-  requests: Array<HelpRequestApp>;
+  requests: Array<HelpRequest_>;
 }
 
 export interface UserProfileFull_ extends UserProfileFull {
   organizations : Array<OrganizationProfile_>;
-  
+  helpRequests : Array<HelpRequestViewPublic_>;
 }
-export interface HelpRequestApp extends HelpRequest {
+export interface HelpRequest_ extends HelpRequest {
   person: Person;
+  currentUserActive: boolean;
 }
 export interface AuthContext {
   isAuthenticated: boolean;

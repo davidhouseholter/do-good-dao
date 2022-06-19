@@ -12,6 +12,10 @@ module {
     /// View Models
     public type UserProfile = {
       userName: Text;
+      name: ?PersonName;
+      address: Text;
+      location : ?Location;
+      
     };
 
     public type ProfilePerson = {
@@ -23,6 +27,11 @@ module {
       userName : Text;
       rewards : Nat;
       organizations : [OrganizationProfile];
+      name : ?PersonName ;
+      address: Text;
+      location : ?Location;
+      helpRequests : [HelpRequestViewPublic]; //where the user is the helper
+      helpRequestsNotifications : [HelperRequestNotifictions];
     };
 
     /// End View Models
@@ -34,15 +43,13 @@ module {
     public type Profile = {
       userName : Text ;
       createdAt : Timestamp;
-      location : ?Location;
+      
       persons : [ProfilePerson];
       organizations : [ProfileOrganization];
-    };
-
-    public type Helper = {
-      userId : UserId ;
-      createdAt : Timestamp;
-      approved : Bool;
+      name : ?PersonName ;
+      address: Text;
+      location : ?Location;
+   
     };
 
     /// End User profile models
@@ -127,6 +134,18 @@ module {
 
     /// HelpRequest Models
 
+    // todo: leader board of all users (total completed, #completed/#accepeted)
+    // todo: leader board of above for each organization
+
+    public type HelpRequestLB = {
+      userId : UserId;
+      score : Nat;
+    };
+
+    public type LeaderBoard = {
+      helpers: [HelpRequestLB];
+    };
+
     // properties for creating a new HelpRequest.
        
     public type HelpRequestId = Nat; // system generated
@@ -138,16 +157,44 @@ module {
       personId : ?PersonId;
       person : ?PersonCreate;
       location : ?Location;
+      rewardAmount: Nat;
+      startDate : Timestamp; 
+      startDateText : Text;
+      dueDate : Timestamp; 
+      dueDateText : Text; 
+
     };
 
     public type HelpRequestStatus = {
       #active ;
-      #accepted: UserId;
-      #confirmed;
-    } ;
+      #inProgress ;
+      #completed ;
+      #approved ;
+    };
+
+    public type Helper = {
+      userId : UserId ;
+      createdAt : Timestamp ;
+      updatedAt : Timestamp ;
+      approved : Bool ;
+      complete : Bool ;
+      acceptComplete : Bool ;
+    };
+
+     public type HelperRequestNotifictions = {
+      userId : ?UserId ;
+      organizationId : OrganizationId ;
+      createdAt : Timestamp ;
+      updatedAt : Timestamp ;
+      message : Text ;
+      read : Bool ;
+      requestId : HelpRequestId;
+    };
+
 
     public type HelpRequest = {
       requestId : HelpRequestId;
+      organizationId: OrganizationId;
       userId : UserId; // owner
       personId : PersonId; // person to help
       name : Text;
@@ -157,7 +204,56 @@ module {
       viewCount : Nat;
       location : ?Location;
       status : HelpRequestStatus;
+      helpers : [Helper];
+      approvedHelper : ?Helper;
+      rewardAmount: Nat;
+      startDate : Timestamp; 
+      startDateText : Text;
+      dueDate : Timestamp; 
+      dueDateText : Text; 
     };
+    
+    public type HelpRequestView = {
+      requestId : HelpRequestId;
+      organizationId: OrganizationId;
+      organization: OrganizationPublic;
+      userId : UserId; // owner
+      personId : PersonId; // person to help
+      name : Text;
+      description : Text;
+      createdAt : Timestamp;   
+      tags : [Text];
+      viewCount : Nat;
+      location : ?Location;
+      status : HelpRequestStatus;
+      rewardAmount: Nat;
+      startDate : Timestamp; 
+      startDateText : Text;
+      dueDate : Timestamp; 
+      dueDateText : Text; 
+      approvedHelper : ?Helper;
+
+    };
+
+    public type HelpRequestViewPublic = {
+      requestId : HelpRequestId;
+      organizationId: OrganizationId;
+      organization: OrganizationPublic;
+      userId : UserId; // owner
+      name : Text;
+      description : Text;
+      createdAt : Timestamp;   
+      tags : [Text];
+      location : ?Location;
+      status : HelpRequestStatus;
+      rewardAmount: Nat;
+      startDate : Timestamp; 
+      startDateText : Text;
+      dueDate : Timestamp; 
+      dueDateText : Text; 
+      approvedHelper : ?Helper;
+    };
+    
     
     public type PersonId = Nat;
 

@@ -1,6 +1,7 @@
 import { OrganizationCreate } from "@/declarations/api/api.did";
 import { createOrganization } from "@/services/ApiService";
 import { useAuth } from "@/utils";
+import { Loading } from "notiflix";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // class OrganziationCreate {
@@ -8,58 +9,74 @@ import { useNavigate } from "react-router-dom";
 //     about: string = "";
 //     // logoPic : LogoPic;
 // }
-export default function OrganizationSetup({setOpen}) {
+export default function OrganizationSetup({ setOpen }) {
 
-    const [org, setOrg] = useState<OrganizationCreate>({
-        about:"",
+    const [org, setOrg] = useState<any>({
+        about: "",
         name: "",
         userName: ""
     });
 
-    const { addOrganization }= useAuth();
+    const { addOrganization } = useAuth();
 
     const navigate = useNavigate();
 
     const onCreateOrg = async () => {
+        Loading.standard("Saving Organiztion...")
         const newOrg = await createOrganization(org);
-        setOpen(false);
-        console.log(newOrg);   
-        addOrganization(newOrg) 
+        if(newOrg) {
+               setOpen(false);
+        addOrganization(newOrg)
         setTimeout(() => {
-            navigate(`/organization/${newOrg.organziationId}`)
+            navigate(`/organization/${newOrg.organziationId}`);
+            Loading.remove();
         }, 300);
+        } else {
+            Loading.remove();
+        }
+     
     }
 
-    
+
     return (
         <>
-            <h2>Setup Non Profit</h2>
             <div>
-                <form className="mt-5 sm:flex sm:items-center">
-                    <div className="w-full sm:max-w-xs">
-                        <input
-                            onChange={(evt) => setOrg({ ...org, name: evt.target.value })}
-                            value={org.name}
-                            type="text"
-                            className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                            name="name"
-                            id="name"
-                            placeholder="name"
-                        />
+                <form className="">
+                    <div className="">
+                        <div className="w-full ">
+                            <label className="block text-sm font-medium text-gray-700 mb-3">Name</label>
+                        </div>
+                        <div className="w-full">
+                            <input
+                                onChange={(evt) => setOrg({ ...org, name: evt.target.value })}
+                                value={org.name}
+                                type="text"
+                                className="shadow-sm   w-full  rounded-md"
+                                name="name"
+                                id="name"
+                                placeholder="name"
+                            />
+                        </div>
                     </div>
-                    <div className="w-full sm:max-w-xs">
-                        <textarea
-                            onChange={(evt) => setOrg({ ...org, about: evt.target.value })}
-                            value={org.about}
-                            className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                            name="about"
-                            id="about"
-                            placeholder="about"
-                        ></textarea>
+                    <div className="my-2">
+                        <div className="w-full ">
+                            <label className="block text-sm font-medium text-gray-700 mb-3">Location</label>
+                        </div>
+                        <div className="w-full">
+                            <input
+                                onChange={(evt) => setOrg({ ...org, location: evt.target.value })}
+                                value={org.location}
+                                type="text"
+                                className="shadow-sm   w-full  rounded-md"
+                                name="location"
+                                id="location"
+                                placeholder="location"
+                            />
+                        </div>
                     </div>
                 </form>
             </div>
-            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <div className=" py-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <button
                     type="button"
                     onClick={onCreateOrg}
@@ -69,7 +86,7 @@ export default function OrganizationSetup({setOpen}) {
                 </button>
             </div>
 
-
+{/* 
             <ul>
                 <li>
                     Add:
@@ -79,7 +96,7 @@ export default function OrganizationSetup({setOpen}) {
                 <li>Location</li>
                 <li>Logo?</li>
 
-            </ul>
+            </ul> */}
         </>
     )
 }

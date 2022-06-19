@@ -23,7 +23,9 @@ import Types "../Types";
     public type CreateProfile = {
       userName : Text;
     };
-
+    public type ProfileChange = {
+      info : Types.UserProfile;
+    };
     public type CreatePerson = {
       info : Types.PersonCreate;
     };
@@ -42,6 +44,7 @@ import Types "../Types";
       #createOrganization : CreateOrganization;
       #createPerson : CreatePerson;
       #eitOrganization : CreateOrganization;
+      #editProfile : ProfileChange;
     };
 
     public type Event = {

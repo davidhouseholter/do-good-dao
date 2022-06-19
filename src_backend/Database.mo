@@ -18,19 +18,23 @@ import SeqObj "./lib/SeqObj";
 module {
 
   public type Rel<X, Y> = RelObj.RelObj<X, Y>;
-  public type Map<X, Y> = TrieMap.TrieMap<X, Y>;
+  // public type Map<X, Y> = TrieMap.TrieMap<X, Y>;
 
   /// Database (api storeed state).
   public type Database = {
     access : Access.Access;
     eventLog : Event.Log;
     var eventCount : Nat;
-    profiles : Map<Types.UserId, Types.Profile>;
-    helpRequests : Map<Types.HelpRequestId, Types.HelpRequest>;
-    organizations : Map<Types.OrganizationId, Types.Organization>;
-    organizationPersons : Map<Types.OrganizationId, [Types.PersonId]>;
-    organizationHelpRequests : Map<Types.OrganizationId, [Types.HelpRequestId]>;
-    persons : Map<Types.PersonId, Types.Person>;
+    profiles : TrieMap.TrieMap<Types.UserId, Types.Profile>;
+    helpRequests : TrieMap.TrieMap<Types.HelpRequestId, Types.HelpRequest>;
+    helpRequestsUser : TrieMap.TrieMap<Types.UserId, [Types.HelpRequestId]>;
+    helpRequestsUserNotification: TrieMap.TrieMap<Types.UserId, [Types.HelperRequestNotifictions]>;
+    organizations : TrieMap.TrieMap<Types.OrganizationId, Types.Organization>;
+    organizationPersons : TrieMap.TrieMap<Types.OrganizationId, [Types.PersonId]>;
+    organizationHelpRequests : TrieMap.TrieMap<Types.OrganizationId, [Types.HelpRequestId]>;
+    
+    persons : TrieMap.TrieMap<Types.PersonId, Types.Person>;
+  
   };
 
   public func empty (init : { admin : Principal }) : Database {
@@ -51,6 +55,8 @@ module {
       profiles = TrieMap.TrieMap<Types.UserId, Types.Profile>(Text.equal, Text.hash);
       eventLog = SeqObj.Seq<Event.Event>(Event.equal, null);
       helpRequests = TrieMap.TrieMap<Types.HelpRequestId, Types.HelpRequest>(Int.equal, Int.hash);
+      helpRequestsUser = TrieMap.TrieMap<Types.UserId, [Types.HelpRequestId]>(Text.equal, Text.hash);
+      helpRequestsUserNotification = TrieMap.TrieMap<Types.UserId, [Types.HelperRequestNotifictions]>(Text.equal, Text.hash);
       organizations = TrieMap.TrieMap<Types.OrganizationId, Types.Organization>(Int.equal, Int.hash);
       organizationPersons = TrieMap.TrieMap<Types.OrganizationId, [Types.PersonId]>(Int.equal, Int.hash);
       organizationHelpRequests = TrieMap.TrieMap<Types.OrganizationId, [Types.HelpRequestId]>(Int.equal, Int.hash);

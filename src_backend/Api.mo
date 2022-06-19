@@ -1,4 +1,5 @@
 
+import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import HashMap "mo:base/HashMap";
@@ -6,7 +7,7 @@ import Int "mo:base/Int";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
-import Bool "mo:base/Bool";
+import Trie "mo:base/Trie";
 import TrieMap "mo:base/TrieMap";
 
 import Database "./Database";
@@ -14,10 +15,8 @@ import Event "./lib/Event";
 import Types "./Types";
 
 shared ({caller = initPrincipal}) actor class API () {
-  public type UserProfile = Types.UserProfile;
-  public type UserProfileFull = Types.UserProfileFull;
-  public type UserId = Types.UserId;
 
+  // todo make stable
   var state = Database.empty({ admin = initPrincipal });
 
   public query ({caller}) func whoami() : async Principal {
@@ -32,7 +31,7 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  public shared(msg) func createProfile(userData : UserProfile) : async ?UserProfileFull {
+  public shared(msg) func createProfile(userData : Types.UserProfile) : async ?Types.UserProfileFull {
     do ? {
      
       let userId = Principal.toText(msg.caller);
@@ -44,7 +43,7 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  public shared(msg) func getUserNameByPrincipal(p:Principal) : async ?[UserId] {
+  public query(msg) func getUserNameByPrincipal(p:Principal) : async ?[Types.UserId] {
     if ( msg.caller == p ) {
       getUserNameByPrincipal_(p);
     } else {
@@ -53,7 +52,7 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  public query(msg) func getProfileFull(): async ?UserProfileFull {
+  public query(msg) func getProfileFull(): async ?Types.UserProfileFull {
     do ? {    
       if(Principal.isAnonymous(msg.caller)) {
         ();
@@ -63,10 +62,21 @@ shared ({caller = initPrincipal}) actor class API () {
     };
   };
 
-  public query(msg) func getUserProfile(userId : UserId) : async ?UserProfile {
+  public query(msg) func getUserProfile(userId : Types.UserId) : async ?Types.UserProfile {
     do ? {
       accessCheck(msg.caller, #view, #user userId)!;
       getUserProfile_(userId)!
+    }
+  };
+
+  public shared(msg) func updateUserProfile(userId : Types.UserId, userData: Types.UserProfile) : async ?Bool {
+    do ? {
+       let userId = Principal.toText(msg.caller);
+     
+      accessCheck(msg.caller, #create, #user userId)!;
+      let user = state.profiles.get(userId)!;
+      let res = updateProfile_(userId, user, userData)!;
+      res
     }
   };
 
@@ -95,7 +105,7 @@ shared ({caller = initPrincipal}) actor class API () {
       accessCheck(msg.caller, #create, #organization orgId)!;
       let currentOrg = getOrganization_(orgId)!;
       let result = editOrganization_(orgId, currentOrg, orgData);
-      result;
+      result!;
     };
   };
 
@@ -114,11 +124,59 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  public query(msg) func getFeedItems(limit : ?Nat) : async ?[Types.HelpRequest] {
+  public query(msg) func getFeedItems(limit : ?Nat) : async ?[Types.HelpRequestViewPublic] {
     do ? {
+      let userId = Principal.toText(msg.caller);
+
       // privacy check: because we personalize the feed (example is abuse flag information).
-      accessCheck(msg.caller, #view, #publicItems)!;
-      getFeedItems_(limit)!;
+      // accessCheck(msg.caller, #view, #publicItems)!;
+      getFeedHelpRequests_(userId, limit)!;
+    }
+  };
+
+  public shared(msg) func applyForHelpRequest(requestId : Types.HelpRequestId) : async ?Bool {
+    do ? {
+      let userId = Principal.toText(msg.caller);
+      let request = state.helpRequests.get(requestId)!;
+      // privacy check: because we personalize the feed (example is abuse flag information).
+      accessCheck(msg.caller, #update, #organization (request.organizationId))!;
+      let org = getOrganization_(request.organizationId)!;
+      addHelperRequest_(request, userId, org.userId)!;
+      true
+    }
+  };
+
+  public shared(msg) func acceptHelperRequest(requestId : Types.HelpRequestId, helperId : Types.UserId) : async ?Bool {
+    do ? {
+      let userId = Principal.toText(msg.caller);
+      let request = state.helpRequests.get(requestId)!;
+      // privacy check: because we personalize the feed (example is abuse flag information).
+      accessCheck(msg.caller, #update, #organization (request.organizationId))!;
+      acceptHelperRequest_(request, helperId)!;
+      true
+    }
+  };
+
+  public shared(msg) func completeHelperRequest(requestId : Types.HelpRequestId) : async ?Bool {
+    do ? {
+      let userId = Principal.toText(msg.caller);
+      let request = state.helpRequests.get(requestId)!;
+      // privacy check: because we personalize the feed (example is abuse flag information).
+      accessCheck(msg.caller, #update, #organization (request.organizationId))!;
+      let org = getOrganization_(request.organizationId)!;
+      completeHelperRequest_(request, userId, org.userId)!;
+      true
+    }
+  };
+
+  public shared(msg) func acceptCompleteHelperRequest(requestId : Types.HelpRequestId, helperId : Types.UserId ) : async ?Bool {
+    do ? {
+      let userId = Principal.toText(msg.caller);
+      let request = state.helpRequests.get(requestId)!;
+      // privacy check: because we personalize the feed (example is abuse flag information).
+      accessCheck(msg.caller, #update, #organization (request.organizationId))!;
+      acceptCompleteHelperRequest_(request, helperId)!;
+      true
     }
   };
 
@@ -130,48 +188,354 @@ shared ({caller = initPrincipal}) actor class API () {
       getHelpRequest_(requestId)!
     }
   };
-
-  func getFeedItems_(limit : ?Nat) : ?[Types.HelpRequest] {
-    do ? {
-      let buf = Buffer.Buffer<Types.HelpRequest>(0);
-      label loopItems
-      for ((itemId, item) in state.helpRequests.entries()) {
-        switch limit { case null { }; case (?l) { if (buf.size() == l) { break loopItems } } };
-        let vs = getHelpRequest_(itemId)!;
-        buf.add(vs);
-      };
-      buf.toArray()
-    }
-  };
-
-  // Help Request Private Functions
     
   func getHelpRequest_ (requestId : Types.HelpRequestId) : ?Types.HelpRequest {
     do ? {
+      
       let v = state.helpRequests.get(requestId)!;
       {
         requestId = requestId ;
         personId = v.personId;
+        organizationId = v.organizationId;
         userId = v.userId ;
         createdAt = v.createdAt ;
         description = v.description ;
         tags = v.tags ;
         viewCount = v.viewCount ;
         name = v.name ;
-        location = null ;
-        status = #active ;
+        location = v.location ;
+        status = v.status;
+        helpers = v.helpers ;
+        startDate = v.startDate ;
+        dueDate =  v.dueDate ;
+        dueDateText = v.dueDateText;
+        startDateText = v.startDateText;
+        rewardAmount = v.rewardAmount ;
+        approvedHelper = v.approvedHelper;
       }
     }
   };
 
-  func createHelpRequest_(userId:Types.UserId, orgId:Types.OrganizationId, i : Types.HelpRequestInit) : ?Types.HelpRequestId {
+  func getHelpRequestPublic_ (requestId : Types.HelpRequestId, userId : Types.UserId) : ?Types.HelpRequestViewPublic {
+    do ? {
+      
+      let v = state.helpRequests.get(requestId)!;
+      let org = getOrganizationPublic_(v.organizationId)!;
+      var helper : ?Types.Helper = null;
+      let helpers = Buffer.Buffer<Types.Helper>(v.helpers.size());
+      for (item in v.helpers.vals()) {
+          if(item.userId == userId) {
+            helper := ?item;
+          };
+      };
+
+
+      {
+        requestId = requestId ;
+        organizationId = v.organizationId ;
+        organization = org ;
+        userId = v.userId ;
+        createdAt = v.createdAt ;
+        description = v.description ;
+        tags = v.tags ;
+        name = v.name ;
+        location = null ;
+        status = #active ;
+        startDate = v.startDate ;
+        dueDate =  v.dueDate ;
+        dueDateText = v.dueDateText;
+        startDateText = v.startDateText;
+        rewardAmount = v.rewardAmount ;
+        approvedHelper = helper;
+      }
+    }
+  };
+
+  func addHelperRequest_ (request : Types.HelpRequest, userId : Types.UserId, ownerUserId: Types.UserId) : ?(){
+    do ? {
+      let now = timeNow_();
+
+      let helpers = Buffer.Buffer<Types.Helper>(request.helpers.size() + 1);
+      for (item in helpers.vals()) {
+        helpers.add(item);
+      };
+      helpers.add({
+        userId = userId ;
+        createdAt = now;
+        updatedAt = now;
+        approved = false;
+        complete = false;
+        acceptComplete = false;
+      });
+      state.helpRequests.put(request.requestId, {
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+        userId = request.userId;
+        personId = request.personId;
+        name = request.name;
+        description = request.description;
+        createdAt = request.createdAt;
+        tags = request.tags;
+        viewCount = request.viewCount;
+        location = request.location;
+        status = request.status;
+        helpers = helpers.toArray();
+        startDate = request.startDate;
+        dueDate =  request.dueDate;
+        dueDateText = request.dueDateText;
+        startDateText = request.startDateText;
+        rewardAmount = request.rewardAmount;
+        approvedHelper = request.approvedHelper;
+      });
+
+      let helperRequests = state.helpRequestsUser.get(userId)!;
+
+      let bufHelpRequest = Buffer.Buffer<Types.HelpRequestId>(helperRequests.size() + 1);
+   
+      for (item in helperRequests.vals()) {
+        bufHelpRequest.add(item);
+      };
+
+      bufHelpRequest.add(request.requestId);
+     
+      state.helpRequestsUser.put(userId, bufHelpRequest.toArray());
+
+      // notifity non profit they have a new help request
+      var message = Text.concat("The request: ", request.name);
+      message := Text.concat(message, " has a help request.");
+      let res = ?addRequestNotifiction_(ownerUserId, {
+        userId = ?userId;
+        organizationId = request.organizationId;
+        createdAt = timeNow_();
+        updatedAt = timeNow_();
+        message = message;
+        complete = false;
+        requestId = request.requestId;
+        read = false;
+      });
+
+       // notifity the user the help request was sent
+      var message2 = Text.concat("The request: ", request.name);
+      message2 := Text.concat(message2, " has sent.");
+      let res2 = ?addRequestNotifiction_(userId, {
+        userId = null;
+        organizationId = request.organizationId;
+        createdAt = timeNow_();
+        updatedAt = timeNow_();
+        message = message2;
+        complete = false;
+        requestId = request.requestId;
+        read = false;
+      });
+      
+      ()
+    }
+  };
+
+  func acceptHelperRequest_ (request : Types.HelpRequest, userId : Types.UserId) : ?(){
+    do ? {
+
+      var helper : ?Types.Helper = null;
+      let helpers = Buffer.Buffer<Types.Helper>(request.helpers.size());
+      for (item in request.helpers.vals()) {
+        if(Text.equal(item.userId, userId)) {
+          helper := ?{
+            userId = item.userId;
+            createdAt = item.createdAt;
+            updatedAt = timeNow_();
+            approved = true;
+            complete = item.complete;
+            acceptComplete = item.acceptComplete;
+           };
+           helpers.add(helper!);
+        } else {
+
+          helpers.add(item);
+        }
+      };
+     
+      state.helpRequests.put(request.requestId, {
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+        userId = request.userId;
+        personId = request.personId;
+        name = request.name;
+        description = request.description;
+        createdAt = request.createdAt;
+        tags = request.tags;
+        viewCount = request.viewCount;
+        location = request.location;
+        status = #inProgress;
+        helpers = helpers.toArray();
+        startDate = request.startDate;
+        dueDate =  request.dueDate;
+        dueDateText = request.dueDateText;
+        startDateText = request.startDateText;
+        rewardAmount = request.rewardAmount;
+        approvedHelper = helper;
+      });
+      // notifity helper they have been accepted
+      var message = Text.concat("The request: ", request.name);
+      message := Text.concat(message, " has been accepted.");
+      let res = ?addRequestNotifiction_(userId, {
+        userId = null;
+        organizationId = request.organizationId;
+        createdAt = timeNow_();
+        updatedAt = timeNow_();
+        message = message;
+        complete = false;
+        requestId = request.requestId;
+        read = false;
+      });
+      ()
+    }
+  };
+ 
+
+   func completeHelperRequest_ (request : Types.HelpRequest, userId : Types.UserId, ownerUserId: Types.UserId) : ?(){
+    do ? {
+      
+      var helper : ?Types.Helper = null;
+      let helpers = Buffer.Buffer<Types.Helper>(request.helpers.size());
+      var i = 0;
+      for (item in request.helpers.vals()) {
+
+        if(item.userId == userId) {
+          helper := ?{
+            userId = item.userId;
+            createdAt = item.createdAt;
+            updatedAt = timeNow_();
+            approved = item.approved;
+            complete = true;
+            acceptComplete = item.acceptComplete;
+           };
+           helpers.add(helper!);
+        } else {
+          helpers.add(item);
+        }
+      };
+     
+      state.helpRequests.put(request.requestId, {
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+        userId = request.userId;
+        personId = request.personId;
+        name = request.name;
+        description = request.description;
+        createdAt = request.createdAt;
+        tags = request.tags;
+        viewCount = request.viewCount;
+        location = request.location;
+        status = #completed;
+        helpers = helpers.toArray();
+        startDate = request.startDate;
+        dueDate =  request.dueDate;
+        dueDateText = request.dueDateText;
+        startDateText = request.startDateText;
+        rewardAmount = request.rewardAmount;
+        approvedHelper = helper;
+      });
+        // notifity helper they have been accepted
+      var message = Text.concat("The request: ", request.name);
+      message := Text.concat(message, " has been completed!");
+      let res = ?addRequestNotifiction_(userId, {
+        userId = null;
+        createdAt = timeNow_();
+        updatedAt = timeNow_();
+        message = message;
+        complete = false;
+        read = false;
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+      });
+      // todo: notifity helper they have been complete. rewards amount. leader board progress and current status
+      ()
+    }
+  };
+
+   func acceptCompleteHelperRequest_ (request : Types.HelpRequest, userId : Types.UserId) : ?(){
+    do ? {
+      
+      var helper : ?Types.Helper = null;
+      let helpers = Buffer.Buffer<Types.Helper>(request.helpers.size());
+      var i = 0;
+      for (item in request.helpers.vals()) {
+
+        if(item.userId == userId) {
+          helper := ?{
+            userId = item.userId;
+            createdAt = item.createdAt;
+            updatedAt = timeNow_();
+            approved = item.approved;
+            complete = item.complete;
+            acceptComplete = true;
+           };
+           helpers.add(helper!);
+        } else {
+          helpers.add(item);
+        }
+      };
+     
+      state.helpRequests.put(request.requestId, {
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+        userId = request.userId;
+        personId = request.personId;
+        name = request.name;
+        description = request.description;
+        createdAt = request.createdAt;
+        tags = request.tags;
+        viewCount = request.viewCount;
+        location = request.location;
+        status = #completed;
+        helpers = helpers.toArray();
+        startDate = request.startDate;
+        dueDate =  request.dueDate;
+        dueDateText = request.dueDateText;
+        startDateText = request.startDateText;
+        rewardAmount = request.rewardAmount;
+        approvedHelper = helper;
+      });
+        // notifity helper they have been accepted
+      var message = Text.concat("The request: ", request.name);
+      message := Text.concat(message, " has been accepted!");
+      let res = ?addRequestNotifiction_(userId, {
+        userId = null;
+        createdAt = timeNow_();
+        updatedAt = timeNow_();
+        message = message;
+        complete = false;
+        read = false;
+        requestId = request.requestId;
+        organizationId = request.organizationId;
+      });
+      // todo: notifity helper they have been accepted complete. rewards amount. leader board progress and current status
+      // todo: issue tokens
+      // todo: leaderboard inserts
+      ()
+    }
+  };
+
+   func addRequestNotifiction_(userId : Types.UserId, data : Types.HelperRequestNotifictions) : ?() {
+    do ? {
+      let notif = state.helpRequestsUserNotification.get(userId)!;
+      let notifList = Buffer.Buffer<Types.HelperRequestNotifictions>(notif.size());
+      var i = 0;
+      for (item in notif.vals()) {
+        notifList.add(item)
+      };  
+      notifList.add(data);
+      state.helpRequestsUserNotification.put(userId, notifList.toArray());
+      ()
+    }
+  };
+
+  func createHelpRequest_(userId: Types.UserId, orgId:Types.OrganizationId, i : Types.HelpRequestInit) : ?Types.HelpRequestId {
     do ? {
       var requestPeronsId : ?Types.PersonId = null;
-      
 
       if(i.personId != null) {
         // check access ;
-        Debug.print("PersonId");
         let person = getPerson_(i.personId!)!;
         requestPeronsId := i.personId;
       } else {
@@ -192,6 +556,7 @@ shared ({caller = initPrincipal}) actor class API () {
             {
               requestId = newId;
               userId = userId ;
+              organizationId = orgId;
               name = i.name ;
               createdAt = now ;
               description =  i.description ;
@@ -200,8 +565,16 @@ shared ({caller = initPrincipal}) actor class API () {
               location = i.location ;
               status = #active ;
               personId = requestPeronsId!;
+              helpers = [];
+              approvedHelper = null;
+              startDate = i.startDate;
+              dueDate =  i.dueDate;
+              dueDateText = i.dueDateText;
+              startDateText = i.startDateText;
+              rewardAmount = i.rewardAmount;
             });
             addOrgHelpRequest_(orgId, newId)!;
+
             logEvent(#createHelpRequest({info = i}));
             newId
           };
@@ -209,7 +582,7 @@ shared ({caller = initPrincipal}) actor class API () {
       }
   };
 
-  func createPerson_(caller: UserId, orgId: Types.OrganizationId, p : Types.PersonCreate) : ?Types.PersonId {
+  func createPerson_(caller: Types.UserId, orgId: Types.OrganizationId, p : Types.PersonCreate) : ?Types.PersonId {
     do ? {
      let now = timeNow_();
      let newId = state.persons.size() + 1;
@@ -235,7 +608,7 @@ shared ({caller = initPrincipal}) actor class API () {
             location = p.location ;
           });
           logEvent(#createPerson({info = p}));
-         
+
           newId;
         };
       }
@@ -291,21 +664,19 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
   
-  func editOrganization_(orgId: Types.OrganizationId, orgData : Types.Organization, orgEdit : Types.OrganizationEdit) : Bool {
-    state.organizations.put(orgId,
-    {
-      createdAt = orgData.createdAt;
-      userId = orgData.userId;
-      userName = orgData.userName;
-      name = orgData.name ;
-      about =  orgData.about ;
-      tags = [];
-      location = null ;
-      logoPic = null ;
+  func editOrganization_(orgId: Types.OrganizationId, orgData : Types.Organization, orgEdit : Types.OrganizationEdit) : ?Bool {
+    state.organizations.put(orgId, {
+        createdAt = orgData.createdAt;
+        userId = orgData.userId;
+        userName = orgData.userName;
+        name = orgData.name ;
+        about =  orgData.about ;
+        tags = [];
+        location = null ;
+        logoPic = null ;
     });
     logEvent(#eitOrganization({info = orgEdit}));
-  
-    true
+    ?true
   };
 
   func getOrganization_ (orgId : Types.OrganizationId) : ?Types.Organization {
@@ -374,41 +745,57 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  func getProfileFull_(user: Principal): ?UserProfileFull {
+  func getProfileFull_(user: Principal): ?Types.UserProfileFull {
     do ? {
-      let userId = Principal.toText(user);
-      
+
+      let userId = Principal.toText(user); 
       accessCheck(user, #update, #user userId)!;
       let userData = getProfile_(userId)!;
       let buf = Buffer.Buffer<Types.OrganizationProfile>(0);
+
       for (item in userData.organizations.vals()) {
         let orgData = getOrganizationProfile_(item.organizationId)!;
         buf.add(orgData);
       };
 
-      let profile = state.profiles.get(userId)!;
-      
+      let requests = state.helpRequestsUser.get(userId)!;
+      let bufHelpRequest = Buffer.Buffer<Types.HelpRequestViewPublic>(requests.size());
+   
+      for (item in requests.vals()) {
+        let helpRequest = getHelpRequestPublic_(item, userId)!;
+        bufHelpRequest.add(helpRequest);
+      };
+
+       let helpRequestsNotifications = state.helpRequestsUserNotification.get(userId)!;
+
       {
         userId = userId;
-        userName = profile.userName;
+        userName = userData.userName;
         rewards = 0; 
         organizations = buf.toArray();
         persons = [];
+        name = userData.name;
+        location = userData.location;
+        address = userData.address;
+        helpRequests = bufHelpRequest.toArray();
+        helpRequestsNotifications = helpRequestsNotifications;
       };
     }
   };
 
-  func getUserProfile_(userId : UserId) : ?UserProfile {
+  func getUserProfile_(userId : Types.UserId) : ?Types.UserProfile {
     do ? {
       let profile = state.profiles.get(userId)!;
       {
         userName = profile.userName; 
-       
+        address = profile.address;
+        location = profile.location;
+        name = profile.name;
       }
     }
   };
 
-  func getProfile_(userId : UserId) : ?Types.Profile {
+  func getProfile_(userId : Types.UserId) : ?Types.Profile {
     do ? {
       let p = state.profiles.get(userId)!;
       {
@@ -417,8 +804,24 @@ shared ({caller = initPrincipal}) actor class API () {
         persons = p.persons;
         createdAt = p.createdAt;
         location = p.location;
+        name = p.name;
+        address = p.address;
       }
     }
+  };
+
+  func updateProfile_(userId : Types.UserId, user: Types.Profile, userData : Types.UserProfile) : ?Bool {
+      state.profiles.put(userId, {
+          userName = user.userName ;
+          createdAt = user.createdAt ;
+          location = userData.location ;
+          organizations = user.organizations;
+          persons = user.persons;
+          name = userData.name;
+          address = userData.address;
+      });
+      logEvent(#editProfile({info=userData;}));
+      ?true
   };
 
   func getUsersPublic_(limit : ?Nat) : ?[Types.UserProfile] {
@@ -435,19 +838,21 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  func createProfile_(user: Principal, userData : UserProfile) : ?() {
+  func createProfile_(user: Principal, userData : Types.UserProfile) : ?() {
     let userId = Principal.toText(user);
     switch (state.profiles.get(userId)) {
       case (?_) { /* error -- ID already taken. */ null };
       case null { /* ok, not taken yet. */
         let now = timeNow_();
-       
         state.profiles.put(userId, {
             userName = userData.userName ;
             createdAt = now ;
-            location = null ;
+            location = userData.location ;
             organizations = [];
             persons = [];
+            name = userData.name;
+            address = userData.address;
+            helpRequests = [];
         });
 
         logEvent(#createProfile({userName=userData.userName;}));
@@ -456,12 +861,15 @@ shared ({caller = initPrincipal}) actor class API () {
 
         state.access.userPrincipal.put(userId, user);
 
+        state.helpRequestsUser.put(userId, []);
+        state.helpRequestsUserNotification.put(userId, []);
+
         ?()
       };
     }
   };
 
-  func addProfileOrg_(userId: UserId, orgId: Types.OrganizationId): ?() {
+  func addProfileOrg_(userId: Types.UserId, orgId: Types.OrganizationId): ?() {
     do ? {
       let userData = getProfile_(userId)!;
       let buf = Buffer.Buffer<Types.ProfileOrganization>(userData.organizations.size() + 1);
@@ -477,6 +885,8 @@ shared ({caller = initPrincipal}) actor class API () {
         persons = userData.persons  ;
         organizations = buf.toArray() ;
         location = userData.location;
+        name = userData.name;
+        address = userData.address;
       });
       ();
     }
@@ -508,24 +918,46 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
+  //  func addUserHelpRequest_(userId:Types.UserId, requestId: Types.HelpRequestId): ?() {
+  //   do ? {
+  //     let p = state.helpRequestsUser.get(userId)!;
+  //     let buf = Buffer.Buffer<Types.PersonId>(p.size() + 1);
+  //     for (item in p.vals()) {
+  //       buf.add(item);
+  //     };
+  //     buf.add(requestId);
+  //     state.helpRequestsUser.put(userId, buf.toArray());
+  //     ();
+  //   }
+  // };
+
   func accessCheck(caller : Principal, action : Types.UserAction, target : Types.ActionTarget) : ?() {
     state.access.check(timeNow_(), caller, action, target)
   };
 
-  func getFeedHelpRequests_(limit : ?Nat) : ?[Types.HelpRequest] {
+  func getFeedHelpRequests_(userId : Types.UserId, limit : ?Nat) : ?[Types.HelpRequestViewPublic] {
     do ? {
-      let buf = Buffer.Buffer<Types.HelpRequest>(0);
+      let buf = Buffer.Buffer<Types.HelpRequestViewPublic>(0);
       label loopItems
       for ((itemId, item) in state.helpRequests.entries()) {
+
         switch limit { case null { }; case (?l) { if (buf.size() == l) { break loopItems } } };
-        let vs = getHelpRequest_(itemId)!;
+        let vs = getHelpRequestPublic_(itemId, userId)!;
+        // if(vs.approvedHelper != null )
+        // {
+        //   break loopItems
+        // };
+        // if(vs.userId == userId)
+        // {
+        //   break loopItems
+        // };
         buf.add(vs);
       };
       buf.toArray()
     }
   };
 
-  func getUserNameByPrincipal_(p:Principal) : ?[UserId] {
+  func getUserNameByPrincipal_(p:Principal) : ?[Types.UserId] {
     ?state.access.userPrincipal.get1(p)
   };
 
@@ -544,7 +976,6 @@ shared ({caller = initPrincipal}) actor class API () {
     }
   };
 
-  
   /// log the given event kind, with a unique ID and current time
   func logEvent(ek : Event.EventKind) {
     

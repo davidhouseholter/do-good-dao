@@ -29,7 +29,6 @@ Install all dependencies of [ICP](https://internetcomputer.org/docs/current/deve
  sh -ci "$(curl -fsSL https://smartcontracts.org/install.sh)"
 ```
 
-
 Start the Replica, deploy the Internet Identity Canister, and depploy the "API" canister and generate the Typescript declarations.  
 
 ```bash

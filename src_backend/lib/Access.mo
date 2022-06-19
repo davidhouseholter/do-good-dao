@@ -150,7 +150,7 @@ module {
                           case (#pubViewOnly) { ?() };
                           case (#organization i) { ?() };
                           case (#all) { null };
-                          case (#publicItems) { null };
+                          case (#publicItems) {  ?() };
                           case (#user i) {                                 
                                  if (userPrincipal.isMember(i, caller_)) {
                                    ?()

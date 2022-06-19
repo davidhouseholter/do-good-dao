@@ -30,11 +30,11 @@ const root = createRoot(container); root.render(
             
 
           </Route>
-          <Route path="/users" element={<Users />} >
+          <Route path="/leaders" element={<Users />} >
            
 
           </Route>
-          <Route path="/users/:userId" element={<User />} />
+          <Route path="/leaders/:userId" element={<User />} />
 
           <Route path="/organization" element={<Organizations />} > </Route>
           <Route path="/organization/:orgId" element={<Organization />} />
