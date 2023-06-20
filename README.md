@@ -1,13 +1,21 @@
-# Internet Computer Boilerplate
+# Internet Computer Hackathon
 
 This project is just a simple ViteJS boilerplate ready to go with a basic example of the Internet Computer application.
 
 - Sign Up with [Internet Identity](https://identity.ic0.app/)
 - Create User Profiles with IC User Principle
-- Basic CRUD Calls
+- Basic CRUD Calls for helpers and help requests
+
+## Video Demo
+[![Watch the video](./public/do_good_create_help_request1.png)](https://vimeo.com/manage/videos/722025893
+)
 
 ## Stack Used
 
+### Backend
+- [Motoko](https://internetcomputer.org/docs/current/motoko/main/motoko)
+- [Internet Computer Blockchain](https://internetcomputer.org/)
+### Frontend
 - [PNPM](https://pnpm.io/)
 - [ViteJS](https://vitejs.dev/)
 - [React](https://reactjs.org/)
