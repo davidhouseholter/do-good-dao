@@ -113,21 +113,21 @@ export function useProvideAuth(authClient): AuthContext {
 
   // For testing environments only, this bypasses the authentication with an
   // identity provider for testing purposes.
-  const DFX_NETWORK = import.meta.env.DFX_NETWORK || "local";
+  const DFX_NETWORK =  "https://ic0.app"; //import.meta.env.DFX_NETWORK || "local";
   useEffect(() => {
-    if (DFX_NETWORK === "local") {
-      const testUserParam = new URLSearchParams(urlWithSearch).get("testUser");
-      if (testUserParam) {
-        // setIsAuthenticatedLocal(true);
-        // setAuthClientReady(true);
-        // setUserFromLocalStorage();
-        // if (!user) {
-        //   getProfileFull(testUserParam).then(
-        //     (user_) => !user && user_ && setUser(user_)
-        //   );
-        // }
-      }
-    }
+    // if (DFX_NETWORK === "local") {
+    //   const testUserParam = new URLSearchParams(urlWithSearch).get("testUser");
+    //   if (testUserParam) {
+    //     // setIsAuthenticatedLocal(true);
+    //     // setAuthClientReady(true);
+    //     // setUserFromLocalStorage();
+    //     // if (!user) {
+    //     //   getProfileFull(testUserParam).then(
+    //     //     (user_) => !user && user_ && setUser(user_)
+    //     //   );
+    //     // }
+    //   }
+    // }
   }, [urlWithSearch, user]);
 
   // When user is set, and is not in local storage yet store the user object

@@ -7,7 +7,7 @@
     
     "app": {
       "dependencies": [
-        "counter"
+        "api"
       ],
       "frontend": {
         "entrypoint": "src/dist/index.html"
@@ -18,10 +18,7 @@
       ],
       "type": "assets"
     },
-    "counter": {
-      "main": "src_backend/counter.mo",
-      "type": "motoko"
-    },
+   
     "internet_identity": {
       "type": "custom",
       "candid": "src_backend/ii/internet_identity.did",

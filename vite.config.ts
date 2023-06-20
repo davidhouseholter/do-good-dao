@@ -23,7 +23,7 @@ try {
       .toString(),
   )
 } catch (e) {
-    console.error("\n⚠️  Before starting the dev server run: dfx deploy\n\n")
+  console.error("\n⚠️  Before starting the dev server run: dfx deploy\n\n")
 }
 // List of all aliases for canisters
 // This will allow us to: import { canisterName } from "canisters/canisterName"
@@ -67,6 +67,9 @@ export default defineConfig({
     jsxFactory: `jsx`,
     jsxInject: `import { jsx } from '@emotion/react'`,
   },
+  build: {
+    target: ['es2020']
+  },
   plugins: [
     macrosPlugin(),
     react({
@@ -96,7 +99,7 @@ export default defineConfig({
     proxy: {
       // This proxies all http requests made to /api to our running dfx instance
       "/api": {
-        target: `http://localhost:${DFX_PORT}`,
+        target: `https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6zxd3-byaaa-aaaam-aammq-cai`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "/api"),
       },

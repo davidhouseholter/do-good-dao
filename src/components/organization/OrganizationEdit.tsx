@@ -48,7 +48,7 @@ export default function OrganizationEdit({ user, org } : Props) {
                             </label>
                             <div className="mt-1 rounded-md shadow-sm flex">
                                 <span className="bg-gray-50 border border-r-0 border-gray-300 rounded-l-md px-3 inline-flex items-center text-gray-500 sm:text-sm">
-                                    localhost:3000/users/
+                                https://6quih-xqaaa-aaaam-aamna-cai.ic0.app/users/
                                 </span>
                                 <input
                                     type="text"

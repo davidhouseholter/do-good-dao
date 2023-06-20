@@ -7,8 +7,8 @@ import {
 import dfxConfig from "../../dfx.json";
 import { _SERVICE } from "@/declarations/api/api.did";
 
-const DFX_NETWORK = import.meta.env.DFX_NETWORK || "local";
-const isLocalEnv = DFX_NETWORK === "local";
+const DFX_NETWORK = "https://ic0.app";
+const isLocalEnv = false //DFX_NETWORK === "local";
 
 function getHost() {
   // Setting host to undefined will default to the window location 👍🏻
@@ -41,6 +41,7 @@ class ActorController {
 
   async initBaseActor(identity?: Identity) {
     const { agent, actor } = createActor(identity);
+    console.log(isLocalEnv)
     // The root key only has to be fetched for local development environments
     if (isLocalEnv) {
       await agent.fetchRootKey().then(() => {

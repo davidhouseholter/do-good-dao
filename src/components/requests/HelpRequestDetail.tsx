@@ -3,9 +3,9 @@ import { Dialog, Transition } from '@headlessui/react'
 import { KeyIcon, UserCircleIcon, XIcon } from '@heroicons/react/outline'
 import { checkUsername, createHelpRequest, createUser } from '@/services/ApiService';
 import { useAuth } from '@/utils';
-import { HelpRequestInit, HelpRequestView, OrganizationProfile, PersonCreate } from '@/declarations/api/api.did';
+import { HelpRequestInit, HelpRequestViewPublic, OrganizationProfile, PersonCreate } from '@/declarations/api/api.did';
 interface Props {
-  request: HelpRequestView;
+  request: HelpRequestViewPublic;
 }
 export default function HelpRequstDetal({ request }: Props) {
   console.log(request)

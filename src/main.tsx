@@ -13,10 +13,10 @@ import { ProvideState } from './utils/AppState'
 import { User } from './pages/User'
 import { Users } from './pages/Users'
 
-import { Organization } from './pages/Organization'
 import { Organizations } from './pages/Organizations'
 import { Help } from './pages/Help'
 import { RequestHelp } from './pages/RequestHelp'
+import { Organization } from './pages/Organization'
 const container = document.getElementById('root');
 const root = createRoot(container); root.render(
 

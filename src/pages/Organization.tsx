@@ -9,21 +9,7 @@ import { CheckCircleIcon, CreditCardIcon, DotsCircleHorizontalIcon, KeyIcon, Map
 import { CogIcon } from '@heroicons/react/solid';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
-function getDateText(req: HelpRequest_) {
-  const start = new Date(req.startDateText).toLocaleDateString();
-  const due = new Date(req.dueDateText).toLocaleDateString();
 
-  if(start == "Invalid Date") {
-    if(due == "Invalid Date") {
-      return  <> {req.dueDateText}</>
-    }
-    return <>{new Date(req.dueDateText).toLocaleDateString()}</>
-  }
-  return <> {req.dueDateText}</>
-}
 export const Organization = () => {
   let params = useParams();
   const location = useLocation()
@@ -139,6 +125,9 @@ export const Organization = () => {
       }
     }
     showDetailsModalSet(show);
+  }
+  if(!org) {
+    return <></>
   }
   return org && (
     <Layout title={`Organization Profile`}>
@@ -681,4 +670,20 @@ export const Organization = () => {
   )
 }
 
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ')
+}
+function getDateText(req: HelpRequest_) {
+  const start = new Date(req.startDateText).toLocaleDateString();
+  const due = new Date(req.dueDateText).toLocaleDateString();
+
+  if(start == "Invalid Date") {
+    if(due == "Invalid Date") {
+      return  <> {req.dueDateText}</>
+    }
+    return <>{new Date(req.dueDateText).toLocaleDateString()}</>
+  }
+  return <> {req.dueDateText}</>
+}
 

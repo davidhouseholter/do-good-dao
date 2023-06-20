@@ -57,7 +57,7 @@ export const Profile = () => {
 
                     {user.organizations?.length > 0 && (
                         <>
-                           <SelectAccountType />
+                           <SelectAccountType setOpen={setOpen} />
                         </>
                     )}
 
